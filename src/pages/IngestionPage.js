@@ -12,6 +12,7 @@ import {
 import { ingestionAPI } from '../services/api';
 import LoadingSpinner, { ButtonSpinner } from '../components/LoadingSpinner';
 import { formatNumber, formatDate } from '../utils/helpers';
+import { mockSummaryData } from '../data/mockData';
 import toast from 'react-hot-toast';
 
 const IngestionPage = () => {
@@ -27,8 +28,73 @@ const IngestionPage = () => {
   const loadIngestionStatus = async () => {
     try {
       setLoading(true);
-      const response = await ingestionAPI.getStatus();
-      setStatus(response.status);
+      
+      // Mock ingestion status data for demo
+      const mockStatus = {
+        customers: {
+          count: mockSummaryData.totalCustomers,
+          lastSync: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+        },
+        products: {
+          count: 156, // Based on mock products data
+          lastSync: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4 hours ago
+        },
+        orders: {
+          count: mockSummaryData.totalOrders,
+          lastSync: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+        }
+      };
+      
+      // Mock sync history
+      const mockHistory = [
+        {
+          id: 1,
+          type: 'orders',
+          fullSync: false,
+          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          results: { created: 23, updated: 45 },
+          status: 'success'
+        },
+        {
+          id: 2,
+          type: 'customers',
+          fullSync: false,
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          results: { created: 8, updated: 12 },
+          status: 'success'
+        },
+        {
+          id: 3,
+          type: 'products',
+          fullSync: true,
+          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+          results: { created: 156, updated: 0 },
+          status: 'success'
+        },
+        {
+          id: 4,
+          type: 'full',
+          fullSync: true,
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          results: { created: 1247, updated: 2645 },
+          status: 'success'
+        },
+        {
+          id: 5,
+          type: 'orders',
+          fullSync: false,
+          timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000),
+          error: 'Shopify API rate limit exceeded',
+          status: 'failed'
+        }
+      ];
+      
+      setStatus(mockStatus);
+      setSyncHistory(mockHistory);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
     } catch (error) {
       console.error('Failed to load ingestion status:', error);
       toast.error('Failed to load data status');
@@ -41,24 +107,15 @@ const IngestionPage = () => {
     setSyncing(prev => ({ ...prev, [type]: true }));
     
     try {
-      let response;
+      // Simulate sync operation with mock results
+      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
       
-      switch (type) {
-        case 'customers':
-          response = await ingestionAPI.syncCustomers(fullSync);
-          break;
-        case 'products':
-          response = await ingestionAPI.syncProducts(fullSync);
-          break;
-        case 'orders':
-          response = await ingestionAPI.syncOrders(fullSync);
-          break;
-        case 'full':
-          response = await ingestionAPI.fullSync();
-          break;
-        default:
-          throw new Error('Invalid sync type');
-      }
+      const mockResults = {
+        customers: { created: Math.floor(Math.random() * 10) + 1, updated: Math.floor(Math.random() * 20) + 5 },
+        products: { created: Math.floor(Math.random() * 5), updated: Math.floor(Math.random() * 15) + 3 },
+        orders: { created: Math.floor(Math.random() * 25) + 10, updated: Math.floor(Math.random() * 30) + 15 },
+        full: { created: Math.floor(Math.random() * 50) + 20, updated: Math.floor(Math.random() * 100) + 50 }
+      };
       
       toast.success(`${type} sync completed successfully`);
       
@@ -69,14 +126,45 @@ const IngestionPage = () => {
           type,
           fullSync,
           timestamp: new Date(),
-          results: response.results,
+          results: mockResults[type] || mockResults.full,
           status: 'success'
         },
         ...prev.slice(0, 9) // Keep last 10 entries
       ]);
       
-      // Refresh status
-      loadIngestionStatus();
+      // Update status counts
+      if (type === 'customers' || type === 'full') {
+        setStatus(prev => ({
+          ...prev,
+          customers: {
+            ...prev.customers,
+            count: prev.customers.count + (mockResults[type]?.created || 0),
+            lastSync: new Date().toISOString()
+          }
+        }));
+      }
+      
+      if (type === 'products' || type === 'full') {
+        setStatus(prev => ({
+          ...prev,
+          products: {
+            ...prev.products,
+            count: prev.products.count + (mockResults[type]?.created || 0),
+            lastSync: new Date().toISOString()
+          }
+        }));
+      }
+      
+      if (type === 'orders' || type === 'full') {
+        setStatus(prev => ({
+          ...prev,
+          orders: {
+            ...prev.orders,
+            count: prev.orders.count + (mockResults[type]?.created || 0),
+            lastSync: new Date().toISOString()
+          }
+        }));
+      }
       
     } catch (error) {
       console.error(`${type} sync failed:`, error);
@@ -146,6 +234,25 @@ const IngestionPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Demo Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <RefreshCw className="h-5 w-5 text-blue-400" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              Demo Mode - Data Ingestion
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>
+                This page simulates Shopify data synchronization. In production, this would sync real data from your Shopify store.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>

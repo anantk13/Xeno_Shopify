@@ -27,6 +27,7 @@ import {
 import { insightsAPI, ingestionAPI } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency, formatNumber, formatDate, getGrowthColor } from '../utils/helpers';
+import { mockSummaryData, mockTopCustomers, generateMockOrdersData } from '../data/mockData';
 import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
@@ -45,37 +46,17 @@ const DashboardPage = () => {
     try {
       setLoading(true);
       
-      // Calculate date range
-      const endDate = new Date();
-      let startDate = new Date();
+      // Mock static data for demo
+      const mockSummary = mockSummaryData;
+      const mockOrdersData = generateMockOrdersData(dateRange);
+      const mockCustomersData = mockTopCustomers;
+
+      setSummary(mockSummary);
+      setOrdersData(mockOrdersData);
+      setTopCustomers(mockCustomersData);
       
-      switch (dateRange) {
-        case 'last7Days':
-          startDate.setDate(endDate.getDate() - 7);
-          break;
-        case 'last30Days':
-          startDate.setDate(endDate.getDate() - 30);
-          break;
-        case 'last90Days':
-          startDate.setDate(endDate.getDate() - 90);
-          break;
-        default:
-          startDate.setDate(endDate.getDate() - 30);
-      }
-
-      const [summaryResponse, ordersResponse, customersResponse] = await Promise.all([
-        insightsAPI.getSummary(),
-        insightsAPI.getOrdersByDate({
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          groupBy: 'day'
-        }),
-        insightsAPI.getTopCustomers({ limit: 5, period: dateRange.replace('last', '').replace('Days', '_days') })
-      ]);
-
-      setSummary(summaryResponse.summary);
-      setOrdersData(ordersResponse.data);
-      setTopCustomers(customersResponse.topCustomers);
+      // Simulate API delay for realistic demo
+      await new Promise(resolve => setTimeout(resolve, 800));
       
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
@@ -105,6 +86,7 @@ const DashboardPage = () => {
     {
       name: 'Total Customers',
       value: formatNumber(summary?.totalCustomers || 0),
+      growth: summary?.growth?.customers || 0,
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100'
@@ -112,6 +94,7 @@ const DashboardPage = () => {
     {
       name: 'Total Orders',
       value: formatNumber(summary?.totalOrders || 0),
+      growth: summary?.growth?.orders || 0,
       icon: ShoppingCart,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
@@ -119,6 +102,7 @@ const DashboardPage = () => {
     {
       name: 'Total Revenue',
       value: formatCurrency(summary?.totalRevenue || 0),
+      growth: summary?.growth?.revenue || 0,
       icon: DollarSign,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
@@ -126,6 +110,7 @@ const DashboardPage = () => {
     {
       name: 'Avg Order Value',
       value: formatCurrency(summary?.averageOrderValue || 0),
+      growth: summary?.growth?.avgOrderValue || 0,
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100'
@@ -134,6 +119,25 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Demo Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <Package className="h-5 w-5 text-blue-400" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              Demo Mode
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>
+                This dashboard is showing static demo data. Connect your Shopify store to see real insights.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -175,6 +179,18 @@ const DashboardPage = () => {
                 <dl>
                   <dt className="stat-label truncate">{stat.name}</dt>
                   <dd className="stat-value">{stat.value}</dd>
+                  {stat.growth !== undefined && (
+                    <dd className="flex items-center text-xs">
+                      {stat.growth >= 0 ? (
+                        <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                      )}
+                      <span className={stat.growth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {Math.abs(stat.growth).toFixed(1)}% vs last period
+                      </span>
+                    </dd>
+                  )}
                 </dl>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ProductsPage from './pages/ProductsPage';
 import IngestionPage from './pages/IngestionPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -73,6 +74,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <DashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/products" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ProductsPage />
               </Layout>
             </ProtectedRoute>
           } 

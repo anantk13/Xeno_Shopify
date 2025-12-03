@@ -8,7 +8,8 @@ import {
   X, 
   LogOut,
   User,
-  ShoppingBag
+  ShoppingBag,
+  Package
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getInitials } from '../utils/helpers';
@@ -20,6 +21,7 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3, current: location.pathname === '/dashboard' },
+    { name: 'Products', href: '/products', icon: Package, current: location.pathname === '/products' },
     { name: 'Data Ingestion', href: '/ingestion', icon: Database, current: location.pathname === '/ingestion' },
     { name: 'Settings', href: '/settings', icon: Settings, current: location.pathname === '/settings' },
   ];

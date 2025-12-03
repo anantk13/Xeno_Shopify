@@ -11,6 +11,7 @@ import { tenantAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ButtonSpinner } from '../components/LoadingSpinner';
 import { isValidEmail, isValidShopifyURL, formatDate } from '../utils/helpers';
+import { mockSummaryData } from '../data/mockData';
 import toast from 'react-hot-toast';
 
 const SettingsPage = () => {
@@ -35,17 +36,24 @@ const SettingsPage = () => {
 
   const loadTenantData = async () => {
     try {
-      const [profileResponse, statsResponse] = await Promise.all([
-        tenantAPI.getProfile(),
-        tenantAPI.getStats()
-      ]);
+      // Mock tenant data for demo
+      const mockProfile = {
+        name: currentTenant?.name || 'Demo Store',
+        email: currentTenant?.email || 'demo@example.com'
+      };
       
-      setProfileData({
-        name: profileResponse.tenant.name,
-        email: profileResponse.tenant.email
-      });
+      const mockStats = {
+        customers: mockSummaryData.totalCustomers,
+        products: 156,
+        orders: mockSummaryData.totalOrders,
+        totalRevenue: mockSummaryData.totalRevenue
+      };
       
-      setStats(statsResponse.stats);
+      setProfileData(mockProfile);
+      setStats(mockStats);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
     } catch (error) {
       console.error('Failed to load tenant data:', error);
@@ -76,8 +84,20 @@ const SettingsPage = () => {
     setErrors({});
     
     try {
-      const response = await tenantAPI.updateProfile(profileData);
-      updateTenantData(response.tenant);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock successful response
+      const mockResponse = {
+        tenant: {
+          ...currentTenant,
+          name: profileData.name,
+          email: profileData.email,
+          updatedAt: new Date().toISOString()
+        }
+      };
+      
+      updateTenantData(mockResponse.tenant);
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Profile update failed:', error);
@@ -113,7 +133,9 @@ const SettingsPage = () => {
     setErrors({});
     
     try {
-      await tenantAPI.updateShopifyCredentials(credentialsData);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       toast.success('Shopify credentials updated successfully');
       setCredentialsData({
         shopifyAccessToken: '',
@@ -144,6 +166,25 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Demo Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <Shield className="h-5 w-5 text-blue-400" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              Demo Mode - Settings
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>
+                This page shows demo settings. Profile and credentials updates are simulated.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
