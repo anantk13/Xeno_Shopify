@@ -1,5 +1,6 @@
 dist/
 .env
+.env.local
 build/
 .DS_Store
 node_modules/
